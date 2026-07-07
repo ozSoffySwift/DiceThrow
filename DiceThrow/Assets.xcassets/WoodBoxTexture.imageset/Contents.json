@@ -1,0 +1,12 @@
+{
+  "images" : [
+    {
+      "filename" : "wood-box-texture.png",
+      "idiom" : "universal"
+    }
+  ],
+  "info" : {
+    "author" : "xcode",
+    "version" : 1
+  }
+}
