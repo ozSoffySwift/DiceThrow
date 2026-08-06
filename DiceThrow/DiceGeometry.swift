@@ -49,6 +49,7 @@ enum DieMeshFactory {
         case .d6:    name = "d6"
         case .d8:    name = "d8"
         case .d10:   name = "d10"
+        case .d12:   name = "d12"
         case .d20:   name = "d20"
         }
         guard let url = Bundle.main.url(forResource: name, withExtension: "usda"),
@@ -95,6 +96,10 @@ enum DieMeshFactory {
             let (verts, faces) = trapezohedron()
             return polyhedron(type, vertices: verts, faces: faces,
                               values: Array(1...10), scale: 0.66, readsBottom: false)
+        case .d12:
+            let (verts, faces) = dodecahedron()
+            return polyhedron(type, vertices: verts, faces: faces,
+                              values: Array(1...12), scale: 0.66, readsBottom: false)
         case .d20:
             let (verts, faces) = icosahedron()
             return polyhedron(type, vertices: verts, faces: faces,
@@ -227,6 +232,56 @@ enum DieMeshFactory {
         // Lower cone: 5 triangles from bottom apex to consecutive equatorial pairs (reversed).
         for k in 0..<5 {
             faces.append([1, ring(k + 1), ring(k)])
+        }
+        return (verts, faces)
+    }
+
+    /// Regular dodecahedron (d12): 12 pentagonal faces.
+    ///
+    /// A verbatim port of `dodecahedron()` in Tools/GenerateDiceModels.swift — the face
+    /// order here has to match the generator's exactly, because `polyhedron` index-aligns
+    /// `faceValues` to it while the visible geometry comes from the baked d12.usda.
+    private static func dodecahedron() -> ([simd_float3], [[Int]]) {
+        let phi = Float((1 + sqrt(5.0)) / 2)
+        var verts: [simd_float3] = []
+        for x in [Float(1), -1] {
+            for y in [Float(1), -1] {
+                for z in [Float(1), -1] { verts.append(.init(x, y, z)) }
+            }
+        }
+        for s1 in [Float(1), -1] {
+            for s2 in [Float(phi), -phi] {
+                verts.append(.init(0, s1 / phi, s2))
+                verts.append(.init(s1 / phi, s2, 0))
+                verts.append(.init(s2, 0, s1 / phi))
+            }
+        }
+        let norm = simd_length(verts[0])
+        verts = verts.map { $0 / norm }
+
+        // The 12 face normals are the dual icosahedron's vertices. Only this cyclic
+        // phase is dual to the vertex set above; the others pick five non-coplanar
+        // vertices below and produce warped pentagons.
+        var faceDirs: [simd_float3] = []
+        for s1 in [Float(1), -1] {
+            for s2 in [Float(phi), -phi] {
+                faceDirs.append(simd_normalize(.init(s1, 0, s2)))
+                faceDirs.append(simd_normalize(.init(s2, s1, 0)))
+                faceDirs.append(simd_normalize(.init(0, s2, s1)))
+            }
+        }
+        var faces: [[Int]] = []
+        for dir in faceDirs {
+            let ranked = verts.indices.sorted { simd_dot(verts[$0], dir) > simd_dot(verts[$1], dir) }
+            var pentagon = Array(ranked.prefix(5))
+            let axisU = simd_normalize(verts[pentagon[0]] - dir * simd_dot(verts[pentagon[0]], dir))
+            let axisV = simd_cross(dir, axisU)
+            pentagon.sort {
+                let a = verts[$0], b = verts[$1]
+                return atan2(simd_dot(a, axisV), simd_dot(a, axisU))
+                     < atan2(simd_dot(b, axisV), simd_dot(b, axisU))
+            }
+            faces.append(pentagon)
         }
         return (verts, faces)
     }

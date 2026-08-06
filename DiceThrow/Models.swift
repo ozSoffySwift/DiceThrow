@@ -4,7 +4,7 @@ import SwiftData
 // MARK: - Die types
 
 enum DieType: String, Codable, CaseIterable, Identifiable {
-    case coin, d4, d6, d8, d10, d20
+    case coin, d4, d6, d8, d10, d12, d20
 
     var id: String { rawValue }
 
@@ -15,6 +15,7 @@ enum DieType: String, Codable, CaseIterable, Identifiable {
         case .d6: 6
         case .d8: 8
         case .d10: 10
+        case .d12: 12
         case .d20: 20
         }
     }
@@ -34,6 +35,7 @@ enum DieType: String, Codable, CaseIterable, Identifiable {
         case .d6:   UIColor(hex: 0xFFFFFF)
         case .d8:   UIColor(hex: 0xA78BFA)
         case .d10:  UIColor(hex: 0xFB7185)
+        case .d12:  UIColor(hex: 0x34D399)
         case .d20:  UIColor(hex: 0x4ECDC4)
         }
     }
@@ -50,6 +52,7 @@ enum DieType: String, Codable, CaseIterable, Identifiable {
         case .d6:   "mat_marble_white"
         case .d8:   "mat_marble_green"
         case .d10:  "mat_copper"
+        case .d12:  "mat_marble_green"
         case .d20:  "mat_steel"
         }
     }
