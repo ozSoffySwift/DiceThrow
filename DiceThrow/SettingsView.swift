@@ -54,6 +54,7 @@ struct SettingsView: View {
                     }
                     group {
                         Button {
+                            Analytics.rateAppTapped()
                             requestReview()
                         } label: {
                             Text("★ Rate This App")
@@ -67,7 +68,7 @@ struct SettingsView: View {
                     }
                     group {
                         VStack(alignment: .leading, spacing: 10) {
-                            Text("Dice Throw: 3D Emulator v1.0")
+                            Text("Dice Throw: 3D Emulator v\(appVersion)")
                                 .font(.system(size: 12, weight: .medium))
                                 .foregroundStyle(.white.opacity(0.6))
                             Text("Developed by Oz Soffy")
@@ -80,14 +81,25 @@ struct SettingsView: View {
             }
         }
         .background(Color(hex: 0x0A0B0F))
+        .onChange(of: soundEnabled) { Analytics.settingChanged("sound", value: String(soundEnabled)) }
+        .onChange(of: hapticsEnabled) { Analytics.settingChanged("haptics", value: String(hapticsEnabled)) }
+        .onChange(of: shakeEnabled) { Analytics.settingChanged("shake", value: String(shakeEnabled)) }
+        .onChange(of: sensitivity) { Analytics.settingChanged("sensitivity", value: sensitivity) }
         .confirmationDialog("Delete all throw history?",
                             isPresented: $confirmingDelete,
                             titleVisibility: .visible) {
             Button("Delete History", role: .destructive) {
                 try? modelContext.delete(model: ThrowResult.self)
+                Analytics.historyCleared()
                 onDeleteHistory()
             }
         }
+    }
+
+    /// Read from the bundle rather than hardcoded — the literal "v1.0" here
+    /// silently went stale the moment MARKETING_VERSION moved.
+    private var appVersion: String {
+        Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "—"
     }
 
     private var topBar: some View {

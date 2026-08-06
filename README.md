@@ -3,7 +3,7 @@
 <img src="DiceThrow/Assets.xcassets/AppIcon.appiconset/AppIcon-1024.png" width="100" height="100" alt="Dice Throw app icon" align="left">
 
 **Dice Throw** is a native iOS app that turns your phone into a real dice tray. Drop
-in any mix of coins, d4s, d6s, d8s, d10s, and d20s, tap or shake to throw, and watch
+in any mix of coins, d4s, d6s, d8s, d10s, d12s and d20s, tap or shake to throw, and watch
 them tumble and settle with real physics, realistic shadows, and satisfying sound —
 all rendered in 3D on a photographed wooden box background.
 
@@ -35,7 +35,7 @@ all rendered in 3D on a photographed wooden box background.
 
 ## Features
 
-- Mix and match six die types: coin, d4, d6, d8, d10, d20 (up to 10 dice in a pool)
+- Mix and match seven die types: coin, d4, d6, d8, d10, d12, d20 (up to 10 dice in a pool)
 - Tap the felt, tap a die, shake the phone, or drag-and-flick a held die to throw
 - Long-press a die to pick it up, aim, and throw it in a specific direction — or drag
   it off the table to remove it
@@ -47,7 +47,7 @@ all rendered in 3D on a photographed wooden box background.
 - Procedurally generated 3D dice with beveled edges and real material textures, plus a
   recorded coin-toss sound effect
 - Settings for sound, haptics, shake-to-throw, and shake sensitivity
-- Built entirely with SwiftUI, SceneKit, and SwiftData — no third-party dependencies
+- Built with SwiftUI, SceneKit and SwiftData; Firebase Analytics is the only dependency
 
 ## Tech stack
 
@@ -55,8 +55,27 @@ all rendered in 3D on a photographed wooden box background.
 - SceneKit for 3D rendering and physics simulation
 - SwiftData for persisted throw history
 - AVAudioEngine for procedural impact sounds and a recorded coin-toss clip
+- Firebase Analytics via `FirebaseAnalyticsCore` — the variant with no IDFA/AdSupport
+  access, so the app needs no App Tracking Transparency prompt
 - Procedurally generated dice geometry (`DiceGeometry.swift`) with per-face value
   reading from each die's physical resting orientation
+
+## Building
+
+The Firebase config is **not** committed — `DiceThrow/GoogleService-Info.plist` is
+gitignored because this repo is public. To build with analytics, create your own
+Firebase iOS app for bundle id `com.ozsoffy.DiceThrow`, download its
+`GoogleService-Info.plist`, and drop it in `DiceThrow/`.
+
+Without that file the app still builds and runs — `DiceThrowApp` skips
+`FirebaseApp.configure()` when it's missing, so analytics is simply off.
+
+The 3D dice models are generated, not hand-authored. To regenerate them after
+changing `Tools/GenerateDiceModels.swift`:
+
+```
+swift Tools/GenerateDiceModels.swift DiceThrow/DiceModels
+```
 
 ## Project structure
 
@@ -68,6 +87,7 @@ DiceThrow/
   DiceTableView.swift       UIViewRepresentable wrapper + gesture handling
   DiceGeometry.swift        Procedural dice meshes, face-value reading
   Models.swift               DieType, PooledDie, ThrowResult (SwiftData)
+  Analytics.swift            Firebase event + user-property taxonomy, in one place
   SoundSynth.swift            Procedural + recorded audio playback
   HistoryView.swift           Throw history chart + per-throw breakdown
   SettingsView.swift          Sound/haptics/shake settings
@@ -75,6 +95,7 @@ DiceThrow/
   DiceModels/                 USD dice models + material textures
   BoxModel/                   USD box model
   Assets.xcassets/             App icon, launch image, wood box texture
+  PrivacyInfo.xcprivacy        Required-reason API + collected-data declarations
 Marketing/
   Screenshots/                 App Store-ready screenshots (1242x2688)
 ```
