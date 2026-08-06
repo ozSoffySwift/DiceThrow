@@ -52,20 +52,25 @@ struct ContentView: View {
                 table: table,
                 onTapFelt: { point in
                     if dockOpen { dockOpen = false; return }
-                    throwDice(from: point)
+                    throwDice(from: point, source: .tapFelt)
                 },
                 onTapDie: { id in
                     if dockOpen { dockOpen = false; return }
                     if let position = table.diePosition(id) {
-                        throwDice(from: position)
+                        throwDice(from: position, source: .tapDie)
                     }
                 },
                 onRemoveDie: { id in
+                    if let die = pool.first(where: { $0.id == id }) {
+                        Analytics.dieRemoved(die.type, method: "drag_off",
+                                             poolSizeAfter: pool.count - 1)
+                    }
                     pool.removeAll { $0.id == id }
                 },
                 onDirectionalThrow: { direction in
                     if dockOpen { dockOpen = false; return }
                     dismissWelcomeHint()
+                    Analytics.diceThrown(source: .drag, pool: pool)
                     beginNewThrow()
                     table.throwAllDirectional(direction)
                 }
@@ -91,18 +96,28 @@ struct ContentView: View {
         .onAppear {
             loadPool()
             table.soundEnabled = { soundEnabled }
-            table.onSettled = { rolls, total in
-                modelContext.insert(ThrowResult(total: total, rolls: rolls))
-                currentTotal = total
+            table.onSettled = { outcome in
+                // Feedback first, persistence second: the SwiftData insert runs
+                // synchronously on the main actor, so doing it ahead of the haptic
+                // put a (small, history-size-dependent) stall right in the path
+                // between the dice stopping and the user feeling the result.
+                currentTotal = outcome.total
                 Haptics.impact(.heavy)
-                animateCountUp(to: total)
+                animateCountUp(to: outcome.total)
+                modelContext.insert(ThrowResult(total: outcome.total, rolls: outcome.rolls))
+                Analytics.throwSettled(total: outcome.total,
+                                       poolSize: outcome.rolls.count,
+                                       settleMs: Int(outcome.settleDuration * 1000),
+                                       timedOut: outcome.timedOut)
             }
             table.syncPool(pool)
             shake.onShake = {
                 dismissWelcomeHint()
-                throwDice(from: nil)
+                throwDice(from: nil, source: .shake)
             }
             updateShakeMonitor()
+            syncAnalyticsUserProperties()
+            Analytics.screenView("dice_table")
             if history.isEmpty && !hasShownShakeHint {
                 hasShownShakeHint = true
                 withAnimation(.easeIn(duration: 0.4)) {
@@ -116,9 +131,15 @@ struct ContentView: View {
         .onChange(of: pool) { _, newPool in
             table.syncPool(newPool)
             savePool()
+            syncAnalyticsUserProperties()
         }
-        .onChange(of: shakeEnabled) { updateShakeMonitor() }
-        .onChange(of: sensitivity) { shake.setSensitivity(sensitivity) }
+        .onChange(of: shakeEnabled) { updateShakeMonitor(); syncAnalyticsUserProperties() }
+        .onChange(of: soundEnabled) { syncAnalyticsUserProperties() }
+        .onChange(of: hapticsEnabled) { syncAnalyticsUserProperties() }
+        .onChange(of: sensitivity) {
+            shake.setSensitivity(sensitivity)
+            syncAnalyticsUserProperties()
+        }
         .onChange(of: scenePhase) { updateShakeMonitor() }
     }
 
@@ -287,6 +308,8 @@ struct ContentView: View {
             HStack {
                 // History.
                 Button {
+                    Analytics.historyOpened(throwCount: history.count)
+                    Analytics.screenView("history")
                     showHistory = true
                 } label: {
                     Image(systemName: "clock.fill")
@@ -303,6 +326,7 @@ struct ContentView: View {
 
                 // Settings.
                 Button {
+                    Analytics.screenView("settings")
                     showSettings = true
                 } label: {
                     Image(systemName: "gearshape.fill")
@@ -318,6 +342,7 @@ struct ContentView: View {
                 // Reset.
                 Button {
                     if dockOpen { dockOpen = false }
+                    Analytics.poolReset(poolSizeBefore: pool.count)
                     pool.removeAll()
                 } label: {
                     Image(systemName: "trash.fill")
@@ -393,7 +418,9 @@ struct ContentView: View {
                     .overlay(Circle().stroke(.white.opacity(0.25), lineWidth: 2))
                     .shadow(color: .black.opacity(0.45), radius: 8, y: 5)
                 }
-                .offset(y: dockOpen ? -CGFloat(index + 1) * 58 : 0)
+                // 52pt rather than 58: with seven die types the fan is tall enough
+                // that the top entry would otherwise crowd the results column.
+                .offset(y: dockOpen ? -CGFloat(index + 1) * 52 : 0)
                 .scaleEffect(dockOpen ? 1 : 0.3, anchor: .bottom)
                 .opacity(dockOpen ? 1 : 0)
                 .animation(
@@ -464,7 +491,7 @@ struct ContentView: View {
         }
         countUpTask = Task { @MainActor in
             let steps = min(total, 18)
-            let duration = 0.85
+            let duration = 0.45
             let stepDelay = duration / Double(steps)
             for i in 1...steps {
                 if Task.isCancelled { return }
@@ -494,9 +521,10 @@ struct ContentView: View {
         }
     }
 
-    private func throwDice(from origin: simd_float3?) {
+    private func throwDice(from origin: simd_float3?, source: Analytics.ThrowSource) {
         guard !pool.isEmpty else { return }
         dismissWelcomeHint()
+        Analytics.diceThrown(source: source, pool: pool)
         beginNewThrow()
         table.throwAll(from: origin)
         Haptics.impact(.medium)
@@ -517,6 +545,7 @@ struct ContentView: View {
     private func addDie(_ type: DieType) {
         if pool.count < maxPool {
             pool.append(PooledDie(type: type))
+            Analytics.dieAdded(type, poolSizeAfter: pool.count)
         }
         withAnimation(.spring(response: 0.35, dampingFraction: 0.7)) {
             dockOpen = false
@@ -534,6 +563,14 @@ struct ContentView: View {
 
     private func savePool() {
         poolData = (try? JSONEncoder().encode(pool)) ?? Data()
+    }
+
+    private func syncAnalyticsUserProperties() {
+        Analytics.updateUserProperties(pool: pool,
+                                       soundEnabled: soundEnabled,
+                                       hapticsEnabled: hapticsEnabled,
+                                       shakeEnabled: shakeEnabled,
+                                       sensitivity: sensitivity)
     }
 
     private func updateShakeMonitor() {
