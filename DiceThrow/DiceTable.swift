@@ -22,8 +22,18 @@ final class DiceTable: NSObject, ObservableObject, SCNPhysicsContactDelegate {
 
     @Published var rolling = false
 
+    /// The outcome of one throw, handed to `onSettled`.
+    struct Outcome {
+        let rolls: [DieRoll]
+        let total: Int
+        /// Wall-clock seconds from throw start to the dice being declared settled.
+        let settleDuration: TimeInterval
+        /// True when the safety timeout fired rather than the dice actually resting.
+        let timedOut: Bool
+    }
+
     /// Called on the main queue when all dice come to rest.
-    var onSettled: (([DieRoll], Int) -> Void)?
+    var onSettled: ((Outcome) -> Void)?
     var soundEnabled: () -> Bool = { true }
 
     private var diceNodes: [UUID: SCNNode] = [:]
@@ -48,6 +58,10 @@ final class DiceTable: NSObject, ObservableObject, SCNPhysicsContactDelegate {
     private func buildScene() {
         scene.background.contents = UIColor.clear
         scene.physicsWorld.contactDelegate = self
+        // Run the simulation slightly fast-forward. Real dice at this scale take a
+        // beat longer to settle than feels good on a phone, and scaling time is
+        // cheaper than re-tuning every mass, impulse and friction value to match.
+        scene.physicsWorld.speed = 1.35
 
         // Invisible floor — the real wood box photo (WoodBorderView, behind the
         // SceneKit layer) is the visible surface — but this one still writes
@@ -145,16 +159,33 @@ final class DiceTable: NSObject, ObservableObject, SCNPhysicsContactDelegate {
         cameraNode.eulerAngles = SCNVector3(-Float.pi / 2, 0, 0)
         scene.rootNode.addChildNode(cameraNode)
 
-        // Key light with shadows + soft ambient fill.
+        // Key light with shadows + soft ambient fill. The shadow is the only depth
+        // cue in a straight-down orthographic view — without it a die at the top of
+        // its arc looks identical to one lying flat — so it's tuned for legibility
+        // in flight rather than for subtlety.
         let key = SCNLight()
         key.type = .directional
         key.intensity = 950
         key.castsShadow = true
-        key.shadowRadius = 6
-        key.shadowColor = UIColor.black.withAlphaComponent(0.55)
+        // Shadow projection is left automatic on purpose. Fitting it by hand to the
+        // play area recovers texel density in theory, but in this scene it silently
+        // produced no shadow at all under the deferred pass — and a correct-on-paper
+        // frustum is worth nothing against a shadow you can't see. A bigger map buys
+        // most of the same sharpness with none of the risk.
+        key.shadowMapSize = CGSize(width: 2048, height: 2048)
+        // With the resolution recovered the blur can come down from 6, which was
+        // wide enough to smear an airborne die into a barely-visible smudge.
+        key.shadowRadius = 3
+        key.shadowSampleCount = 16
+        key.shadowColor = UIColor.black.withAlphaComponent(0.75)
         key.shadowMode = .deferred
         let keyNode = SCNNode()
         keyNode.light = key
+        // ~21 degrees off vertical. Under a straight-down camera the tilt is what
+        // turns height into a visible horizontal gap (~0.38 x height), so it is the
+        // depth cue — flatten it toward vertical and a resting die's shadow hides
+        // completely underneath it. Keep the angle; the fix for legibility is
+        // resolution, darkness and blur above, not geometry.
         keyNode.eulerAngles = SCNVector3(-Float.pi / 2.6, -0.4, 0)
         scene.rootNode.addChildNode(keyNode)
 
@@ -305,7 +336,7 @@ final class DiceTable: NSObject, ObservableObject, SCNPhysicsContactDelegate {
 
             // Compress to gather point (0.08 seconds)
             let gatherAction = SCNAction.sequence([
-                .customAction(duration: 0.08) { n, elapsed in
+                .customAction(duration: 0.05) { n, elapsed in
                     let progress = Float(elapsed) / 0.08
                     let dx = gatherPos.x - currentPos.x
                     let dy = gatherPos.y - currentPos.y
@@ -332,7 +363,7 @@ final class DiceTable: NSObject, ObservableObject, SCNPhysicsContactDelegate {
             node.runAction(gatherAction)
         }
 
-        settleTimer = Timer.scheduledTimer(withTimeInterval: 0.12, repeats: true) { [weak self] _ in
+        settleTimer = Timer.scheduledTimer(withTimeInterval: 0.05, repeats: true) { [weak self] _ in
             self?.checkSettled()
         }
     }
@@ -431,7 +462,7 @@ final class DiceTable: NSObject, ObservableObject, SCNPhysicsContactDelegate {
                                               Float.random(in: 10...18))
         }
 
-        settleTimer = Timer.scheduledTimer(withTimeInterval: 0.12, repeats: true) { [weak self] _ in
+        settleTimer = Timer.scheduledTimer(withTimeInterval: 0.05, repeats: true) { [weak self] _ in
             self?.checkSettled()
         }
     }
@@ -439,20 +470,25 @@ final class DiceTable: NSObject, ObservableObject, SCNPhysicsContactDelegate {
     private func checkSettled() {
         guard let start = throwStartedAt else { return }
         let elapsed = -start.timeIntervalSinceNow
-        guard elapsed > 0.9 else { return }
+        // Just long enough that a die can't be declared settled while it's still
+        // being launched. Anything beyond that is dead waiting: the dice have
+        // stopped, and we'd only be holding the number back.
+        guard elapsed > 0.35 else { return }
 
         let allResting = diceNodes.values.allSatisfy { node in
             guard let body = node.physicsBody else { return true }
             let v = body.velocity
             let speedSq = v.x * v.x + v.y * v.y + v.z * v.z
-            return speedSq < 0.06 && abs(body.angularVelocity.w) < 0.7
+            return speedSq < 0.09 && abs(body.angularVelocity.w) < 0.9
         }
-        if allResting || elapsed > 4.5 {
-            finishThrow()
+        // Fallback for a die that creeps or wobbles against a rail without ever
+        // dipping under the rest thresholds — its face has long since stopped changing.
+        if allResting || elapsed > 2.6 {
+            finishThrow(settleDuration: elapsed, timedOut: !allResting)
         }
     }
 
-    private func finishThrow() {
+    private func finishThrow(settleDuration: TimeInterval, timedOut: Bool) {
         settleTimer?.invalidate()
         settleTimer = nil
         throwStartedAt = nil
@@ -464,7 +500,8 @@ final class DiceTable: NSObject, ObservableObject, SCNPhysicsContactDelegate {
         let total = rolls.reduce(0) { $0 + $1.value }
 
         rolling = false
-        onSettled?(rolls, total)
+        onSettled?(Outcome(rolls: rolls, total: total,
+                           settleDuration: settleDuration, timedOut: timedOut))
     }
 
     /// Reads a die's value from whichever face normal points most upward
