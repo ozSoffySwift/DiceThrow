@@ -11,3 +11,7 @@ build/
 # Swift Package Manager
 .swiftpm/
 .build/
+
+# Firebase config — carries this project's API key and IDs, and the repo is
+# public. Grab your own from the Firebase console and drop it in DiceThrow/.
+GoogleService-Info.plist

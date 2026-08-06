@@ -101,12 +101,17 @@ func dodecahedron() -> ([simd_float3], [[Int]]) {
     }
     let norm = simd_length(verts[0])
     verts = verts.map { $0 / norm }
+    // The 12 face normals are the dual icosahedron's vertices, and only one of the
+    // three cyclic phases is actually dual to the vertex set built above. Using the
+    // wrong phase makes `prefix(5)` below pick five non-coplanar vertices — the
+    // pentagons come out warped and bevelPolyhedron then drops every edge band and
+    // corner cap. Correct phase: exactly five vertices tie for the top dot product.
     var faceDirs: [simd_float3] = []
     for s1 in [Float(1), -1] {
         for s2 in [phi, -phi] {
-            faceDirs.append(simd_normalize(.init(0, s1, s2)))
-            faceDirs.append(simd_normalize(.init(s1, s2, 0)))
-            faceDirs.append(simd_normalize(.init(s2, 0, s1)))
+            faceDirs.append(simd_normalize(.init(s1, 0, s2)))
+            faceDirs.append(simd_normalize(.init(s2, s1, 0)))
+            faceDirs.append(simd_normalize(.init(0, s2, s1)))
         }
     }
     var faces: [[Int]] = []
@@ -252,7 +257,15 @@ func projectedCorners(points: [simd_float3]) -> [simd_float2] {
     let center = pts.reduce(simd_float3.zero, +) / Float(pts.count)
     var n = simd_normalize(simd_cross(pts[1] - pts[0], pts[2] - pts[0]))
     if simd_dot(n, center) < 0 { pts.reverse(); n = -n }
-    let u = simd_normalize(pts[0] - center)
+    // Even-sided faces take their basis from an edge midpoint, odd-sided ones from a
+    // vertex. Pointing `u` at a vertex puts a square's corners on the ±u/±v axes — a
+    // diamond in tile space — which rotated every d6 face's pips 45° and clipped the
+    // inlay plate. Triangles keep the vertex basis so the d4's corner numbers, which
+    // index the projected corners directly, stay put; pentagons carry centred numbers
+    // either way.
+    let u = pts.count % 2 == 0
+        ? simd_normalize((pts[0] + pts[1]) * 0.5 - center)
+        : simd_normalize(pts[0] - center)
     let v = simd_cross(n, u)
     let projected = pts.map { p in simd_float2(simd_dot(p - center, u), simd_dot(p - center, v)) }
     let maxR = projected.map { simd_length($0) }.max() ?? 1
