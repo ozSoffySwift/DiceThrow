@@ -428,8 +428,13 @@ func drawTile(_ art: TileArt, rect: CGRect, spec: DieSpec,
         case .number(let text):
             let plate = rect.insetBy(dx: rect.width * 0.28, dy: rect.height * 0.28)
             drawInlayPlate(rect: plate, ctx: ctx)
-            let size: CGFloat = text.count > 2 ? rect.width * 0.26 : rect.width * 0.34
-            drawCenteredText(text, at: CGPoint(x: rect.midX, y: rect.midY),
+            // A lone 6 and a lone 9 are the same glyph upside down, and on a die
+            // that lands in any orientation there is nothing else to tell them
+            // apart — so mark them the way real dice do. Only single digits: on
+            // 16 or 19 the leading digit already fixes the reading.
+            let label = (text == "6" || text == "9") ? text + "." : text
+            let size: CGFloat = label.count > 2 ? rect.width * 0.26 : rect.width * 0.34
+            drawCenteredText(label, at: CGPoint(x: rect.midX, y: rect.midY),
                              size: size, color: pipColor)
         case .pips(let value):
             let plate = rect.insetBy(dx: rect.width * 0.16, dy: rect.height * 0.16)

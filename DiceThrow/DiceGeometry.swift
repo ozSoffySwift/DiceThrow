@@ -76,13 +76,19 @@ enum DieMeshFactory {
                 .init(1, 1, 1), .init(1, -1, -1), .init(-1, 1, -1), .init(-1, -1, 1)
             ].map { $0 * s }
             let faces = [[0, 1, 2], [0, 3, 1], [0, 2, 3], [1, 3, 2]]
-            // Each face is painted with its own number (not a shared
-            // vertex-read like a real tabletop d4), so the value the
-            // player sees facing up is the value that should be scored —
-            // read the top face like every other die, not the hidden
-            // bottom one.
+            // The d4 is corner-read, like a real one: every face carries the
+            // values of its three vertices, and the roll is the number at the
+            // apex pointing up — which is the vertex *opposite* the face resting
+            // on the felt. So this reads the bottom face and maps it to that
+            // opposite vertex: face [0,1,2] excludes V3 -> 4, [0,3,1] -> 3,
+            // [0,2,3] -> 2, [1,3,2] -> 1.
+            //
+            // Reading the top face here is not merely a different convention, it
+            // is undefined: a resting tetrahedron has no upward face, all three
+            // side normals tie at y = +0.333, so the winner came down to float
+            // noise and the scored value had no relation to the number on top.
             return polyhedron(type, vertices: verts, faces: faces,
-                              values: Array(1...4), scale: 0.78, readsBottom: false)
+                              values: [4, 3, 2, 1], scale: 0.78, readsBottom: true)
         case .d8:
             let verts: [simd_float3] = [
                 .init(1, 0, 0), .init(-1, 0, 0), .init(0, 1, 0),
