@@ -9,5 +9,12 @@ Version 1.1
 • Correct d6 pips. The dots on the six-sided dice now sit where they do on a
   real die. The 3, 4 and 6 faces were noticeably off before.
 
+• Correct d4 results. The four-sided die now scores the number showing at its
+  top point. It could previously report a different number than the one on the
+  die.
+
+• Easier to read 6 and 9. Both are now marked with a dot — 6. and 9. — so a
+  rolled 6 can't be mistaken for a 9 on the d8, d10, d12 and d20.
+
 • Clearer shadows. Dice cast a stronger, sharper shadow, so you can tell at a
   glance how high one is in the air as it falls.
