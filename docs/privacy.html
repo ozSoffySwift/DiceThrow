@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Privacy Policy — Dice Throw</title>
+<meta name="description" content="Dice Throw's privacy policy: no account, no personal information, your dice pool and throw history stay on your device.">
+<meta name="theme-color" content="#0A0B0F">
+<link rel="canonical" href="https://ozsoffyswift.github.io/DiceThrow/privacy.html">
+
+<meta property="og:type" content="article">
+<meta property="og:title" content="Privacy Policy — Dice Throw">
+<meta property="og:description" content="No account, no personal information. Your dice pool and throw history stay on your device.">
+<meta property="og:url" content="https://ozsoffyswift.github.io/DiceThrow/privacy.html">
+<meta property="og:image" content="https://ozsoffyswift.github.io/DiceThrow/assets/icon-512.png">
+<meta property="og:image:alt" content="Dice Throw app icon: a wooden die and a white marble die tumbling inside a wooden box.">
+<meta name="twitter:card" content="summary">
+<meta name="apple-itunes-app" content="app-id=6788525350">
+
+<link rel="icon" href="assets/favicon.png" type="image/png">
+<link rel="apple-touch-icon" href="assets/icon-180.png">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700&family=Nunito:wght@400;600;700&display=swap">
+
+<style>
+  :root{
+    --bg:#0A0B0F;--bg-2:#15110B;--card:#1C1710;
+    --gold:#D4AF37;--flash:#FFE9A8;
+    --text:#F2E7CC;--muted:#B3A994;
+    --border:rgba(212,175,55,.16);--border-strong:rgba(212,175,55,.36);
+    --font-head:"Outfit",ui-rounded,"SF Pro Rounded",-apple-system,system-ui,sans-serif;
+    --font-body:"Nunito",ui-rounded,"SF Pro Rounded",-apple-system,system-ui,sans-serif;
+    --header-h:64px;
+    --ease-out:cubic-bezier(.23,1,.32,1);
+  }
+  *,*::before,*::after{box-sizing:border-box}
+  html{scroll-behavior:smooth;scroll-padding-top:calc(var(--header-h) + 16px);-webkit-text-size-adjust:100%}
+  body{
+    margin:0;background:var(--bg);color:var(--text);
+    font-family:var(--font-body);font-size:17px;line-height:1.7;overflow-x:hidden;
+    -webkit-font-smoothing:antialiased;
+  }
+  img{max-width:100%;height:auto;display:block}
+  a{color:var(--gold);text-underline-offset:3px}
+  h1,h2{font-family:var(--font-head);font-weight:600;line-height:1.15;letter-spacing:-.02em;margin:0}
+  h1{font-size:clamp(32px,5vw,46px)}
+  h2{font-size:clamp(21px,2.6vw,26px);margin-top:46px}
+  p{margin:16px 0 0}
+  :focus-visible{outline:2px solid var(--gold);outline-offset:3px;border-radius:6px}
+
+  .wrap{width:100%;max-width:760px;margin-inline:auto;padding-inline:20px}
+  .skip{
+    /* fixed, not absolute: an absolute skip link scrolls away with the document
+       and is unreachable once the reader is part-way down the page. */
+    position:fixed;left:12px;top:-60px;z-index:200;background:var(--gold);color:#0A0B0F;
+    font-family:var(--font-head);font-weight:600;padding:12px 18px;border-radius:10px;
+    transition:top 160ms var(--ease-out);
+  }
+  .skip:focus{top:12px}
+
+  header{
+    position:sticky;top:0;z-index:100;height:var(--header-h);display:flex;align-items:center;
+    background:rgba(10,11,15,.82);border-bottom:1px solid var(--border);
+    backdrop-filter:saturate(160%) blur(14px);-webkit-backdrop-filter:saturate(160%) blur(14px);
+  }
+  .bar{display:flex;align-items:center;gap:18px;width:100%;max-width:760px;margin-inline:auto;padding-inline:20px}
+  .brand{
+    display:flex;align-items:center;gap:10px;margin-right:auto;min-height:44px;
+    font-family:var(--font-head);font-weight:600;font-size:17px;color:var(--text);
+    text-decoration:none;letter-spacing:-.01em;
+  }
+  .brand img{width:30px;height:30px;border-radius:8px}
+  .btn{
+    display:inline-flex;align-items:center;justify-content:center;gap:9px;min-height:44px;
+    padding:10px 18px;border-radius:999px;border:1px solid var(--border-strong);
+    font-family:var(--font-head);font-size:15px;font-weight:600;line-height:1;
+    color:var(--text);text-decoration:none;cursor:pointer;background:transparent;
+    transition:transform 160ms var(--ease-out),border-color 200ms ease,color 200ms ease,background-color 200ms ease;
+  }
+  .btn:active{transform:scale(.97)}
+  .btn svg{width:17px;height:17px;flex:none}
+  @media (hover:hover) and (pointer:fine){.btn:hover{border-color:var(--gold);color:var(--gold)}}
+
+  main{padding-block:clamp(40px,7vw,72px) clamp(56px,9vw,96px)}
+  .updated{color:var(--muted);font-size:15px;margin-top:14px}
+  .lead{
+    margin-top:26px;padding:20px 22px;border-radius:16px;
+    background:var(--card);border:1px solid var(--border);
+  }
+  .lead p:first-child{margin-top:0}
+  ul{margin:14px 0 0;padding-left:0;list-style:none;display:grid;gap:12px}
+  li{display:flex;gap:11px;align-items:flex-start;color:var(--muted)}
+  li svg{width:18px;height:18px;flex:none;color:var(--gold);margin-top:5px}
+  li strong{color:var(--text);font-weight:700}
+  p.body-muted{color:var(--muted)}
+
+  footer{border-top:1px solid var(--border);padding-block:30px;color:var(--muted);font-size:14.5px}
+  .foot{display:flex;flex-wrap:wrap;gap:12px 24px;align-items:center;justify-content:space-between;
+        max-width:760px;margin-inline:auto;padding-inline:20px}
+  .foot nav{display:flex;flex-wrap:wrap;gap:6px 22px}
+  .foot a{color:var(--muted);text-decoration:none;display:inline-flex;align-items:center;min-height:44px}
+  @media (hover:hover) and (pointer:fine){.foot a:hover{color:var(--gold)}}
+
+  @media (prefers-reduced-motion:reduce){
+    html{scroll-behavior:auto}
+    *,*::before,*::after{transition-duration:.01ms !important;animation-duration:.01ms !important}
+  }
+</style>
+</head>
+<body>
+
+<a class="skip" href="#main">Skip to content</a>
+
+<svg width="0" height="0" aria-hidden="true" focusable="false" style="position:absolute">
+  <defs>
+    <g id="i-left"><path d="m15 18-6-6 6-6"/></g>
+    <g id="i-dot"><circle cx="12" cy="12" r="3.2" fill="currentColor" stroke="none"/></g>
+  </defs>
+</svg>
+
+<header>
+  <div class="bar">
+    <a class="brand" href="index.html">
+      <img src="assets/icon-64.png" width="64" height="64" alt="" aria-hidden="true">
+      Dice&nbsp;Throw
+    </a>
+    <a class="btn" href="index.html">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#i-left"/></svg>Back to the app
+    </a>
+  </div>
+</header>
+
+<main id="main">
+  <div class="wrap">
+    <h1>Privacy Policy</h1>
+    <p class="updated">Last updated 7 August 2026 · applies to Dice Throw for iPhone</p>
+
+    <div class="lead">
+      <p><strong>Dice Throw</strong> does not ask for an account, and never collects your name,
+      email, contacts, location, photos, or any other personal information.</p>
+    </div>
+
+    <h2>What stays on your device</h2>
+    <ul>
+      <li><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-dot"/></svg><span>Your dice pool and every throw in your History are stored <strong>only on your device</strong>, using Apple's SwiftData framework. They are never uploaded anywhere.</span></li>
+      <li><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-dot"/></svg><span>Your settings — sound, haptics, shake-to-throw and shake sensitivity — stay on your device.</span></li>
+    </ul>
+
+    <h2>What is collected</h2>
+    <p class="body-muted">Since version 1.1 the app uses <strong>Google Firebase Analytics</strong>
+    to understand how the app is used, so it can be improved:</p>
+    <ul>
+      <li><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-dot"/></svg><span><strong>Usage events</strong> — that a throw happened and how it was started (tap or shake), the dice in your pool, the total rolled, how long the dice took to settle, which screens you opened, and when you change a setting.</span></li>
+      <li><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-dot"/></svg><span><strong>A device identifier</strong> — an anonymous per-install ID generated by Firebase, plus standard device information (model, OS version, country, language).</span></li>
+      <li><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-dot"/></svg><span><strong>Diagnostics</strong> — basic crash and performance data.</span></li>
+    </ul>
+    <p class="body-muted">The app deliberately uses the Firebase Analytics variant that has
+    <strong>no access to the advertising identifier (IDFA)</strong>. It does not track you across
+    other apps or websites, contains no advertising, and shares no data with advertisers or data
+    brokers. This is why the app does not show an App Tracking Transparency prompt.</p>
+    <p class="body-muted">Analytics data is processed by Google on our behalf. See
+    <a href="https://policies.google.com/privacy">Google's Privacy Policy</a> and
+    <a href="https://policies.google.com/technologies/partner-sites">how Google uses data from
+    apps that use its services</a>.</p>
+
+    <h2>Children</h2>
+    <p class="body-muted">The app is rated 4+ and collects no personal information from anyone,
+    including children.</p>
+
+    <h2>Contact</h2>
+    <p class="body-muted">Questions about this policy:
+    <a href="mailto:ozsoffy@gmail.com">ozsoffy@gmail.com</a></p>
+  </div>
+</main>
+
+<footer>
+  <div class="foot">
+    <p>© 2026 Oz Soffy</p>
+    <nav aria-label="Footer">
+      <a href="index.html">Dice Throw</a>
+      <a href="https://apps.apple.com/app/id6788525350">App Store</a>
+      <a href="https://github.com/ozSoffySwift/DiceThrow">Source</a>
+      <a href="mailto:ozsoffy@gmail.com">Contact</a>
+    </nav>
+  </div>
+</footer>
+</body>
+</html>

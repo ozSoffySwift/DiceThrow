@@ -9,6 +9,8 @@ all rendered in 3D on a photographed wooden box background.
 
 <br clear="left">
 
+🌐 **[Website](https://ozsoffyswift.github.io/DiceThrow/)** · 📱 **[App Store](https://apps.apple.com/app/id6788525350)** · 🔒 **[Privacy policy](https://ozsoffyswift.github.io/DiceThrow/privacy.html)**
+
 ## Screenshots
 
 | Home | Dice picker | Live throw | Results |
